@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "7baa30ad-9be6-4360-bc32-c6d07855ee3a"
+				"spark.autotune.trackingId": "caec946b-4c42-48ec-8b26-f99de2408198"
 			}
 		},
 		"metadata": {
@@ -234,7 +234,7 @@
 					"                            .groupBy(col(\"CustomerId\"), window(col(\"InvoiceDate\"), \"1 day\"))\\\r\n",
 					"                            .sum(\"total_cost\")"
 				],
-				"execution_count": 25
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -256,7 +256,7 @@
 					"                        .outputMode(\"complete\")\\\r\n",
 					"                        .start()"
 				],
-				"execution_count": 26
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
