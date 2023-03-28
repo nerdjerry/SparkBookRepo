@@ -8,8 +8,8 @@
 		"cloudsparksynapse-WorkspaceDefaultSqlServer_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:cloudsparksynapse.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
-		"AzureDataLakeStorage_properties_typeProperties_url": {
-			"value": "https://cloudsparkstorage.dfs.core.windows.net/"
+		"CloudSparkStorage_properties_typeProperties_serviceEndpoint": {
+			"value": "https://cloudsparkstorage.blob.core.windows.net/"
 		},
 		"cloudsparksynapse-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://cloudsparkadls.dfs.core.windows.net"

@@ -12,9 +12,9 @@
 			"metadata": "Secure string for 'connectionString' of 'cloudsparksynapse-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:cloudsparksynapse.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
-		"AzureDataLakeStorage_properties_typeProperties_url": {
+		"CloudSparkStorage_properties_typeProperties_serviceEndpoint": {
 			"type": "string",
-			"defaultValue": "https://cloudsparkstorage.dfs.core.windows.net/"
+			"defaultValue": "https://cloudsparkstorage.blob.core.windows.net/"
 		},
 		"cloudsparksynapse-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"type": "string",
@@ -26,14 +26,15 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage')]",
+			"name": "[concat(parameters('workspaceName'), '/CloudSparkStorage')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
-				"type": "AzureBlobFS",
+				"type": "AzureBlobStorage",
 				"typeProperties": {
-					"url": "[parameters('AzureDataLakeStorage_properties_typeProperties_url')]"
+					"serviceEndpoint": "[parameters('CloudSparkStorage_properties_typeProperties_serviceEndpoint')]",
+					"accountKind": "StorageV2"
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -137,7 +138,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4c193d4a-7e6d-4109-99db-f9c57196745e"
+						"spark.autotune.trackingId": "4b27e8f5-1bde-4afc-a02f-26072df23993"
 					}
 				},
 				"metadata": {
@@ -175,7 +176,7 @@
 							"from pyspark.sql import SparkSession"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -194,7 +195,7 @@
 							"spark = SparkSession.builder.getOrCreate()"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -229,7 +230,211 @@
 							"                .load(\"abfss://sparkbook@cloudsparkstorage.dfs.core.windows.net/data/data/retail-data/by-day/*.csv\")"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"staticDataFrame.createOrReplaceTempView(\"retail_data\")"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"staticSchema = staticDataFrame.schema"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql.functions import window, column, desc, col\r\n",
+							"staticDataFrame\\\r\n",
+							"    .selectExpr(\r\n",
+							"        \"CustomerId\",\r\n",
+							"        \"(UnitPrice * Quantity) as total_cost\",\r\n",
+							"        \"InvoiceDate\")\\\r\n",
+							"    .groupBy(\r\n",
+							"        col(\"CustomerId\"), window(col(\"InvoiceDate\"), \"1 day\"))\\\r\n",
+							"    .sum(\"total_cost\")\\\r\n",
+							"    .sort(desc(\"sum(total_cost)\"))\\\r\n",
+							"    .show(5, truncate=False)"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"streamingDataFrame = spark.readStream\\\r\n",
+							"                        .schema(staticSchema)\\\r\n",
+							"                        .option(\"maxFilesPerTrigger\", 1)\\\r\n",
+							"                        .format(\"csv\")\\\r\n",
+							"                        .option(\"header\",\"true\")\\\r\n",
+							"                        .load(\"abfss://sparkbook@cloudsparkstorage.dfs.core.windows.net/data/data/retail-data/by-day/*.csv\")"
+						],
+						"outputs": [],
+						"execution_count": 16
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"streamingDataFrame.isStreaming"
+						],
+						"outputs": [],
+						"execution_count": 17
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"purchaseByCustomerPerHour = streamingDataFrame \\\r\n",
+							"                            .selectExpr(\r\n",
+							"                                \"CustomerId\",\r\n",
+							"                                \"(UnitPrice * Quantity) as total_cost\",\r\n",
+							"                                \"InvoiceDate\")\\\r\n",
+							"                            .groupBy(col(\"CustomerId\"), window(col(\"InvoiceDate\"), \"1 day\"))\\\r\n",
+							"                            .sum(\"total_cost\")"
+						],
+						"outputs": [],
+						"execution_count": 25
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"purchaseByCustomerPerHour.writeStream\\\r\n",
+							"                        .format(\"memory\")\\\r\n",
+							"                        .queryName(\"customer_purchases\")\\\r\n",
+							"                        .outputMode(\"complete\")\\\r\n",
+							"                        .start()"
+						],
+						"outputs": [],
+						"execution_count": 26
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"spark.sql(\"\"\"\r\n",
+							"    SELECT *\r\n",
+							"    FROM customer_purchases\r\n",
+							"    ORDER BY `sum(total_cost)` DESC\r\n",
+							"\"\"\")\\\r\n",
+							".show(5)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"purchaseByCustomerPerHour.writeStream.format(\"console\")\\\r\n",
+							"                        .queryName(\"customer_purchase_2\")\\\r\n",
+							"                        .outputMode(\"complete\")\\\r\n",
+							"                        .start()"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
