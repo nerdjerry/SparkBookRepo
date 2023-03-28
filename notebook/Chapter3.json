@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3e3472f7-3df1-43de-8105-05c8a7bb805f"
+				"spark.autotune.trackingId": "fa650279-6ac5-47d7-a3c5-64a8ec656d8b"
 			}
 		},
 		"metadata": {
@@ -53,7 +53,7 @@
 				"source": [
 					"from pyspark.sql import SparkSession"
 				],
-				"execution_count": 1
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -71,7 +71,7 @@
 				"source": [
 					"spark = SparkSession.builder.getOrCreate()"
 				],
-				"execution_count": 2
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -105,7 +105,25 @@
 					"                .option(\"inferSchema\", \"true\")\\\r\n",
 					"                .load(\"abfss://sparkbook@cloudsparkstorage.dfs.core.windows.net/data/data/retail-data/by-day/*.csv\")"
 				],
-				"execution_count": 5
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
