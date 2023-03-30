@@ -138,7 +138,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "70edc344-bd23-4a7b-bd05-bceb210d1903"
+						"spark.autotune.trackingId": "ea519a98-a679-4d65-866b-213d7a61dd72"
 					}
 				},
 				"metadata": {
@@ -176,7 +176,7 @@
 							"from pyspark.sql import SparkSession"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -195,7 +195,7 @@
 							"spark = SparkSession.builder.getOrCreate()"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 2
 					},
 					{
 						"cell_type": "markdown",
@@ -230,7 +230,7 @@
 							"                .load(\"abfss://sparkbook@cloudsparkstorage.dfs.core.windows.net/data/data/retail-data/by-day/*.csv\")"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -249,7 +249,7 @@
 							"staticDataFrame.createOrReplaceTempView(\"retail_data\")"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -268,7 +268,7 @@
 							"staticSchema = staticDataFrame.schema"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -297,7 +297,7 @@
 							"    .show(5, truncate=False)"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -321,7 +321,7 @@
 							"                        .load(\"abfss://sparkbook@cloudsparkstorage.dfs.core.windows.net/data/data/retail-data/by-day/*.csv\")"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -340,7 +340,7 @@
 							"streamingDataFrame.isStreaming"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -365,7 +365,7 @@
 							"                            .sum(\"total_cost\")"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -388,7 +388,7 @@
 							"                        .start()"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -435,6 +435,287 @@
 						],
 						"outputs": [],
 						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Machine Learning"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql.functions import date_format, col"
+						],
+						"outputs": [],
+						"execution_count": 29
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"preppedDataFrame = staticDataFrame \\\r\n",
+							".na.fill(0)\\\r\n",
+							".withColumn(\"day_of_week\", date_format(col(\"InvoiceDate\"), \"EEEE\"))\\\r\n",
+							".coalesce(5)"
+						],
+						"outputs": [],
+						"execution_count": 30
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"trainDataFrame = preppedDataFrame\\\r\n",
+							"    .where(\"InvoiceDate < '2011-07-01'\")\r\n",
+							"testDataFrame = preppedDataFrame \\\r\n",
+							"    .where(\"InvoiceDate >= '2011-07-01'\")"
+						],
+						"outputs": [],
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.ml.feature import StringIndexer\r\n",
+							"indexer = StringIndexer() \\\r\n",
+							"    .setInputCol(\"day_of_week\")\\\r\n",
+							"    .setOutputCol(\"day_of_week_index\")"
+						],
+						"outputs": [],
+						"execution_count": 32
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.ml.feature import OneHotEncoder\r\n",
+							"encoder = OneHotEncoder() \\\r\n",
+							"    .setInputCol(\"day_of_week_index\")\\\r\n",
+							"    .setOutputCol(\"day_of_week_encoded\")"
+						],
+						"outputs": [],
+						"execution_count": 33
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.ml.feature import VectorAssembler\r\n",
+							"vectorAssembler = VectorAssembler() \\\r\n",
+							"    .setInputCols([\"UnitPrice\", \"Quantity\", \"day_of_week_encoded\"])\\\r\n",
+							"    .setOutputCol(\"features\")"
+						],
+						"outputs": [],
+						"execution_count": 34
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.ml import Pipeline\r\n",
+							"transformationPipeline = Pipeline() \\\r\n",
+							"    .setStages([indexer, encoder, vectorAssembler])"
+						],
+						"outputs": [],
+						"execution_count": 35
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"fittedPipeline = transformationPipeline.fit(trainDataFrame)"
+						],
+						"outputs": [],
+						"execution_count": 38
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"transformedTraining = fittedPipeline.transform(trainDataFrame)"
+						],
+						"outputs": [],
+						"execution_count": 39
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.ml.clustering import KMeans\r\n",
+							"kmeans = KMeans()\\\r\n",
+							"    .setK(20)\\\r\n",
+							"    .setSeed(1)"
+						],
+						"outputs": [],
+						"execution_count": 42
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"kmModel = kmeans.fit(transformedTraining)"
+						],
+						"outputs": [],
+						"execution_count": 43
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"transformedTest = fittedPipeline.transform(testDataFrame)"
+						],
+						"outputs": [],
+						"execution_count": 44
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql import Row\r\n",
+							"spark.sparkContext.parallelize([Row(1), Row(2), Row(3)]).toDF().show()"
+						],
+						"outputs": [],
+						"execution_count": 47
 					},
 					{
 						"cell_type": "code",
